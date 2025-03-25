@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原子習慣追蹤器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-light: #80E27E;
+            --primary-dark: #087f23;
+            --secondary: #FFC107;
+            --danger: #F44336;
+            --gray: #757575;
+            --light-gray: #f5f5f5;
+            --dark-gray: #424242;
+            --white: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 414px; /* iPhone 標準寬度 */
+            margin: 0 auto;
+            background: var(--white);
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .screen {
+            display: none;
+            height: 100%;
+            padding: 20px;
+            padding-bottom: 80px;
+            overflow-y: auto;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .navbar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 414px;
+            background: var(--white);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid var(--light-gray);
+            z-index: 1000;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .nav-item i {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--dark-gray);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .habit-card {
+            display: flex;
+            align-items: center;
+        }
+        
+        .habit-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .habit-icon i {
+            font-size: 24px;
+        }
+        
+        .habit-info {
+            flex-grow: 1;
+        }
+        
+        .habit-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .habit-subtitle {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .habit-action {
+            margin-left: 8px;
+        }
+        
+        .circle-progress {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--primary);
+            box-shadow: inset 0 0 0 8px var(--primary-light);
+        }
+        
+        .progress-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .big-circle-progress {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 0 15px var(--primary-light);
+        }
+        
+        .big-circle-progress .percentage {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .big-circle-progress .label {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        
+        .progress-stats {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: var(--white);
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 16px;
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .icon-item {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .icon-item.selected {
+            background: var(--primary-light);
+            color: var(--white);
+        }
+        
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-day {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .calendar-day.completed {
+            background: var(--primary);
+            color: var(--white);
+        }
+        
+        .calendar-day.missed {
+            background: var(--danger);
+            color: var(--white);
+        }
+        
+        .calendar-day.today {
+            border: 2px solid var(--primary);
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .achievement-card {
+            display: flex;
+            align-items: center;
+        }
+        
+        .achievement-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: var(--dark-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .achievement-icon i {
+            font-size: 30px;
+        }
+        
+        .achievement-info {
+            flex-grow: 1;
+        }
+        
+        .achievement-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .achievement-subtitle {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .welcome-screen {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .welcome-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .welcome-icon {
+            font-size: 80px;
+            color: var(--primary);
+            margin-bottom: 30px;
+        }
+        
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .welcome-text {
+            margin-bottom: 30px;
+            color: var(--gray);
+        }
+        
+        .welcome-footer {
+            padding: 20px;
+        }
+        
+        .full-width-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+        }
+        
+        .settings-list {
+            list-style: none;
+        }
+        
+        .settings-item {
+            padding: 16px 0;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .settings-item-label {
+            display: flex;
+            align-items: center;
+        }
+        
+        .settings-item-label i {
+            margin-right: 15px;
+            font-size: 20px;
+            color: var(--gray);
+            width: 24px;
+            text-align: center;
+        }
+        
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--light-gray);
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .pagination-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--light-gray);
+            margin: 0 5px;
+        }
+        
+        .pagination-dot.active {
+            background: var(--primary);
+        }
+        
+        /* 媒體查詢確保在實際設備上的顯示效果 */
+        @media (max-width: 414px) {
+            .container {
+                width: 100%;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 歡迎頁 -->
+        <div id="welcome-screen" class="screen active">
+            <div class="welcome-screen">
+                <div class="welcome-content">
+                    <div class="welcome-icon">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                    <h1 class="welcome-title">原子習慣追蹤器</h1>
+                    <p class="welcome-text">基於《原子習慣》的理念，幫助您建立並保持良好的習慣。小改變，大不同。</p>
+                    <div class="pagination">
+                        <div class="pagination-dot active"></div>
+                        <div class="pagination-dot"></div>
+                        <div class="pagination-dot"></div>
+                    </div>
+                </div>
+                <div class="welcome-footer">
+                    <button class="btn btn-primary full-width-btn" onclick="showScreen('dashboard-screen')">開始使用</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主面板/儀表板 -->
+        <div id="dashboard-screen" class="screen">
+            <div class="header">
+                <h1>今日習慣</h1>
+                <button class="btn btn-primary" onclick="showScreen('create-habit-screen')">
+                    <i class="fas fa-plus"></i> 添加
+                </button>
+            </div>
+            
+            <div id="habits-container">
+                <!-- 習慣卡片將由JavaScript動態生成 -->
+            </div>
+            
+            <div class="header">
+                <h1>進度概覽</h1>
+                <span onclick="showScreen('stats-screen')">查看更多 <i class="fas fa-chevron-right"></i></span>
+            </div>
+            
+            <div class="card">
+                <div class="progress-chart">
+                    <div class="big-circle-progress">
+                        <div>
+                            <div class="percentage">0%</div>
+                            <div class="label">本週完成率</div>
+                        </div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">連續天數</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">習慣總數</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 創建習慣頁 -->
+        <div id="create-habit-screen" class="screen">
+            <div class="header">
+                <h1>創建新習慣</h1>
+                <button class="btn btn-outline" onclick="showScreen('dashboard-screen')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">習慣名稱</label>
+                <input type="text" class="form-input" placeholder="例如：晨跑 30 分鐘">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">選擇圖標</label>
+                <div class="icon-grid">
+                    <div class="icon-item selected"><i class="fas fa-running"></i></div>
+                    <div class="icon-item"><i class="fas fa-book"></i></div>
+                    <div class="icon-item"><i class="fas fa-meditation"></i></div>
+                    <div class="icon-item"><i class="fas fa-apple-alt"></i></div>
+                    <div class="icon-item"><i class="fas fa-brain"></i></div>
+                    <div class="icon-item"><i class="fas fa-dumbbell"></i></div>
+                    <div class="icon-item"><i class="fas fa-guitar"></i></div>
+                    <div class="icon-item"><i class="fas fa-language"></i></div>
+                    <div class="icon-item"><i class="fas fa-paint-brush"></i></div>
+                    <div class="icon-item"><i class="fas fa-bed"></i></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">頻率</label>
+                <select class="form-select">
+                    <option>每天</option>
+                    <option>每週</option>
+                    <option>工作日</option>
+                    <option>週末</option>
+                    <option>自定義</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">目標時間 (可選)</label>
+                <input type="time" class="form-input">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">提示 (讓它顯而易見)</label>
+                <input type="text" class="form-input" placeholder="例如：起床後，放好跑鞋">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">動機 (讓它有吸引力)</label>
+                <input type="text" class="form-input" placeholder="例如：提高精力，保持健康">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">執行步驟 (讓它簡單易行)</label>
+                <textarea class="form-textarea" placeholder="例如：1. 準備運動服 2. 設定路線 3. 開始跑步"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">獎勵 (讓它令人滿足)</label>
+                <input type="text" class="form-input" placeholder="例如：每週達標可享受一次電影夜">
+            </div>
+            
+            <button class="btn btn-primary full-width-btn">
+                創建習慣
+            </button>
+        </div>
+        
+        <!-- 習慣詳情頁 -->
+        <div id="habit-detail-screen" class="screen">
+            <div class="header">
+                <h1>習慣詳情</h1>
+                <button class="btn btn-outline" onclick="showScreen('dashboard-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card habit-card">
+                <div class="habit-icon">
+                    <i class="fas fa-running"></i>
+                </div>
+                <div class="habit-info">
+                    <div class="habit-title">習慣名稱</div>
+                    <div class="habit-subtitle">習慣詳情</div>
+                </div>
+                <div class="habit-action">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tab active">概覽</div>
+                <div class="tab">日曆</div>
+                <div class="tab">筆記</div>
+            </div>
+            
+            <div class="card">
+                <div class="progress-chart">
+                    <div class="big-circle-progress">
+                        <div>
+                            <div class="percentage">0%</div>
+                            <div class="label">本月完成率</div>
+                        </div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">連續天數</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">總天數</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header">
+                <h1>本月進度</h1>
+            </div>
+            
+            <div class="card">
+                <div class="calendar">
+                    <div class="calendar-day">一</div>
+                    <div class="calendar-day">二</div>
+                    <div class="calendar-day">三</div>
+                    <div class="calendar-day">四</div>
+                    <div class="calendar-day">五</div>
+                    <div class="calendar-day">六</div>
+                    <div class="calendar-day">日</div>
+                    <!-- 日曆內容將由JavaScript動態生成 -->
+                </div>
+            </div>
+            
+            <div class="header">
+                <h1>習慣鏈</h1>
+            </div>
+            
+            <div class="card">
+                <div class="form-group">
+                    <label class="form-label">提示 (讓它顯而易見)</label>
+                    <div>尚未設定</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">動機 (讓它有吸引力)</label>
+                    <div>尚未設定</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">執行步驟 (讓它簡單易行)</label>
+                    <div>尚未設定</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">獎勵 (讓它令人滿足)</label>
+                    <div>尚未設定</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 統計分析頁 -->
+        <div id="stats-screen" class="screen">
+            <div class="header">
+                <h1>統計分析</h1>
+                <button class="btn btn-outline" onclick="showScreen('dashboard-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tab active">本週</div>
+                <div class="tab">本月</div>
+                <div class="tab">全部</div>
+            </div>
+            
+            <div class="card">
+                <div class="progress-chart">
+                    <div class="big-circle-progress">
+                        <div>
+                            <div class="percentage">0%</div>
+                            <div class="label">總完成率</div>
+                        </div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">最長連續</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">總計天數</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header">
+                <h1>習慣完成情況</h1>
+            </div>
+            
+            <div id="habits-stats-container">
+                <!-- 習慣統計卡片將由JavaScript動態生成 -->
+            </div>
+            
+            <div class="header">
+                <h1>洞察</h1>
+            </div>
+            
+            <div class="card">
+                <div class="form-group">
+                    <label class="form-label">最佳表現時間</label>
+                    <div>早上 6:00 - 8:00</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">最容易堅持的習慣</label>
+                    <div>尚未有足夠數據</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">需要加強的習慣</label>
+                    <div>尚未有足夠數據</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">習慣建議</label>
+                    <div>考慮將閱讀安排在早上，您在早上的執行力更強。嘗試將閱讀與晨跑後的休息時間連接起來，形成習慣鏈。</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 成就頁 -->
+        <div id="achievements-screen" class="screen">
+            <div class="header">
+                <h1>成就與獎勵</h1>
+                <button class="btn btn-outline" onclick="showScreen('dashboard-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card achievement-card">
+                <div class="achievement-icon">
+                    <i class="fas fa-medal"></i>
+                </div>
+                <div class="achievement-info">
+                    <div class="achievement-title">習慣養成者</div>
+                    <div class="achievement-subtitle">成功完成一個習慣連續7天</div>
+                </div>
+            </div>
+            
+            <div class="card achievement-card">
+                <div class="achievement-icon">
+                    <i class="fas fa-award"></i>
+                </div>
+                <div class="achievement-info">
+                    <div class="achievement-title">堅持不懈</div>
+                    <div class="achievement-subtitle">完成一個習慣總計30天</div>
+                </div>
+            </div>
+            
+            <div class="card achievement-card" style="opacity: 0.5;">
+                <div class="achievement-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="achievement-info">
+                    <div class="achievement-title">習慣大師</div>
+                    <div class="achievement-subtitle">同時保持3個習慣連續30天</div>
+                </div>
+            </div>
+            
+            <div class="header">
+                <h1>可兌換獎勵</h1>
+            </div>
+            
+            <div class="card achievement-card">
+                <div class="achievement-icon" style="background: var(--primary-light);">
+                    <i class="fas fa-film"></i>
+                </div>
+                <div class="achievement-info">
+                    <div class="achievement-title">電影夜</div>
+                    <div class="achievement-subtitle">連續完成一個習慣7天</div>
+                </div>
+                <div class="habit-action">
+                    <button class="btn btn-outline" id="redeem-movie">兌換</button>
+                </div>
+            </div>
+            
+            <div class="card achievement-card">
+                <div class="achievement-icon" style="background: var(--primary-light);">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="achievement-info">
+                    <div class="achievement-title">美食獎勵</div>
+                    <div class="achievement-subtitle">一個月內完成率達到80%</div>
+                </div>
+                <div class="habit-action">
+                    <button class="btn btn-outline" id="redeem-food">兌換</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 社區頁 -->
+        <div id="community-screen" class="screen">
+            <div class="header">
+                <h1>社區與分享</h1>
+                <button class="btn btn-outline" onclick="showScreen('dashboard-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tab active">好友動態</div>
+                <div class="tab">小組</div>
+                <div class="tab">挑戰</div>
+            </div>
+            
+            <div class="card habit-card">
+                <div class="habit-icon" style="background: #9C27B0;">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="habit-info">
+                    <div class="habit-title">王小明</div>
+                    <div class="habit-subtitle">剛剛完成了 "晨跑 30 分鐘" 的習慣！</div>
+                </div>
+                <div class="habit-action">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-thumbs-up"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card habit-card">
+                <div class="habit-icon" style="background: #2196F3;">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="habit-info">
+                    <div class="habit-title">張小華</div>
+                    <div class="habit-subtitle">已連續堅持 "冥想 10 分鐘" 15天！</div>
+                </div>
+                <div class="habit-action">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-thumbs-up"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="header">
+                <h1>熱門挑戰</h1>
+            </div>
+            
+            <div class="card">
+                <div class="habit-title">30天早起挑戰</div>
+                <div class="habit-subtitle">已有 152 人參加</div>
+                <div style="display: flex; align-items: center; margin-top: 10px;">
+                    <div style="flex-grow: 1; height: 5px; background: var(--light-gray); border-radius: 5px; overflow: hidden;">
+                        <div style="width: 60%; height: 100%; background: var(--primary);"></div>
+                    </div>
+                    <span style="margin-left: 10px; font-weight: 600; color: var(--primary);">60%</span>
+                </div>
+                <button class="btn btn-primary" style="margin-top: 15px; width: 100%;">
+                    參加挑戰
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="habit-title">21天閱讀習慣養成</div>
+                <div class="habit-subtitle">已有 87 人參加</div>
+                <div style="display: flex; align-items: center; margin-top: 10px;">
+                    <div style="flex-grow: 1; height: 5px; background: var(--light-gray); border-radius: 5px; overflow: hidden;">
+                        <div style="width: 30%; height: 100%; background: var(--primary);"></div>
+                    </div>
+                    <span style="margin-left: 10px; font-weight: 600; color: var(--primary);">30%</span>
+                </div>
+                <button class="btn btn-primary" style="margin-top: 15px; width: 100%;">
+                    參加挑戰
+                </button>
+            </div>
+        </div>
+        
+        <!-- 設置頁 -->
+        <div id="settings-screen" class="screen">
+            <div class="header">
+                <h1>設置</h1>
+                <button class="btn btn-outline" onclick="showScreen('dashboard-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <ul class="settings-list">
+                    <li class="settings-item">
+                        <div class="settings-item-label">
+                            <i class="fas fa-bell"></i>
+                            <span>通知提醒</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </li>
+                    
+                    <li class="settings-item">
+                        <div class="settings-item-label">
+                            <i class="fas fa-moon"></i>
+                            <span>深色模式</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </li>
+                    
+                    <li class="settings-item">
+                        <div class="settings-item-label">
+                            <i class="fas fa-lock"></i>
+                            <span>隱私設置</span>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </li>
+                    
+                    <li class="settings-item">
+                        <div class="settings-item-label">
+                            <i class="fas fa-language"></i>
+                            <span>語言</span>
+                        </div>
+                        <span>繁體中文</span>
+                    </li>
+                    
+                    <li class="settings-item">
+                        <div class="settings-item-label">
+                            <i class="fas fa-cloud"></i>
+                            <span>數據備份</span>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </li>
+                    
+                    <li class="settings-item">
+                        <div class="settings-item-label">
+                            <i class="fas fa-info-circle"></i>
+                            <span>關於</span>
+                        </div>
+                        <span>v1.0.0</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <button class="btn btn-outline full-width-btn" style="margin-top: 20px;" id="clear-data">
+                清除所有數據
+            </button>
+        </div>
+        
+        <!-- 知識庫頁面 -->
+        <div id="knowledge-screen" class="screen">
+            <div class="header">
+                <h1>原子習慣知識庫</h1>
+                <button class="btn btn-outline" onclick="showScreen('dashboard-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <input type="text" class="form-input" placeholder="搜索知識文章..." style="padding-left: 40px;">
+                <i class="fas fa-search" style="position: absolute; left: 35px; top: 85px; color: var(--gray);"></i>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tab active">推薦</div>
+                <div class="tab">基礎知識</div>
+                <div class="tab">進階技巧</div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-concept')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #E3F2FD; color: #2196F3; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-atom"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">原子習慣的概念</div>
+                        <div class="habit-subtitle">微小改變帶來巨大成果</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-four-laws')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #F3E5F5; color: #9C27B0; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-list-ol"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">習慣的四個法則</div>
+                        <div class="habit-subtitle">提示、渴望、反應、獎勵</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-identity')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #E8F5E9; color: #4CAF50; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">身份變化</div>
+                        <div class="habit-subtitle">從身份開始改變習慣</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-tracking')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #FFF3E0; color: #FF9800; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">習慣追蹤</div>
+                        <div class="habit-subtitle">養成習慣的關鍵方法</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-stacking')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #E1F5FE; color: #03A9F4; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">習慣疊加</div>
+                        <div class="habit-subtitle">將新習慣與已有習慣連接</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-environment')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #F1F8E9; color: #8BC34A; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">環境設計</div>
+                        <div class="habit-subtitle">創造有利於好習慣的環境</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-two-minute')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #E0F7FA; color: #00BCD4; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">兩分鐘法則</div>
+                        <div class="habit-subtitle">讓習慣養成變得簡單</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-bad-habits')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #FFEBEE; color: #F44336; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">壞習慣的斷捨離</div>
+                        <div class="habit-subtitle">打破不良循環</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+            
+            <div class="card" style="cursor: pointer;" onclick="showArticle('article-consistency')">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #EDE7F6; color: #673AB7; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div class="habit-title">習慣的持續策略</div>
+                        <div class="habit-subtitle">如何堅持不放棄</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 文章詳情頁 -->
+        <div id="article-concept" class="screen">
+            <div class="header">
+                <h1>原子習慣的概念</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #E3F2FD; color: #2196F3; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-atom" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">微小改變帶來巨大成果</h2>
+                
+                <p style="margin-bottom: 15px;">原子習慣的核心理念是「微小改變，積少成多」。就像原子是物質的最小單位，細小的習慣改變是個人成長的基礎。</p>
+                
+                <p style="margin-bottom: 15px;">當你每天改進1%，一年後你將變得比現在好37倍。相反，如果每天退步1%，一年後你將幾乎降至零。</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 改變習慣需要耐心和持續性。小習慣的力量不在於立即轉變，而在於長期累積。
+                </div>
+                
+                <p style="margin-bottom: 15px;">習慣是「複利」的等同物——微小行為的回報隨著時間累積，能產生驚人的結果。習慣的效果會延遲顯現，這也是為什麼我們往往看不到微小習慣的重要性。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何應用：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>專注於變得比昨天好1%，而不是尋求立竿見影的巨大改變</li>
+                    <li>建立習慣追蹤系統，記錄微小進步</li>
+                    <li>耐心等待習慣累積的效果，不要過早放棄</li>
+                    <li>關注系統和過程，而不僅僅是結果</li>
+                </ul>
+                
+                <div style="background: #E3F2FD; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 本週選擇一個微小的好習慣（如每天深呼吸3次、每天多喝一杯水、閱讀5分鐘），持續記錄並保持一週。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-four-laws" class="screen">
+            <div class="header">
+                <h1>習慣的四個法則</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #F3E5F5; color: #9C27B0; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-list-ol" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">提示、渴望、反應、獎勵</h2>
+                
+                <p style="margin-bottom: 15px;">習慣形成的過程可以分解為四個法則，這是所有習慣的核心循環：</p>
+                
+                <div style="margin-bottom: 20px;">
+                    <div style="background: #F3E5F5; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>第一法則（提示）：讓它顯而易見</strong><br>
+                        提示是觸發你大腦啟動行為的線索。想要養成好習慣，就要讓提示顯而易見；想要戒除壞習慣，就要讓提示隱而不見。
+                    </div>
+                    
+                    <div style="background: #EDE7F6; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>第二法則（渴望）：讓它有吸引力</strong><br>
+                        渴望是驅動你行動的動機。想要養成好習慣，就要讓它有吸引力；想要戒除壞習慣，就要讓它缺乏吸引力。
+                    </div>
+                    
+                    <div style="background: #D1C4E9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>第三法則（反應）：讓它簡單易行</strong><br>
+                        反應是你實際執行的習慣。想要養成好習慣，就要讓它簡單易行；想要戒除壞習慣，就要讓它難以執行。
+                    </div>
+                    
+                    <div style="background: #B39DDB; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>第四法則（獎勵）：讓它令人滿足</strong><br>
+                        獎勵是習慣帶來的好處。想要養成好習慣，就要讓好習慣帶來即時的滿足感；想要戒除壞習慣，就要讓壞習慣的後果令人不滿。
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 15px;">這四個法則提供了一個簡單而有效的框架，幫助我們理解和改變任何習慣。當所有四個組成部分都存在，就會產生一個習慣。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何應用：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>分析你的習慣模式，確定每個習慣的提示、渴望、反應和獎勵</li>
+                    <li>改良現有習慣或建立新習慣時，運用四法則來增加成功率</li>
+                    <li>使用「習慣評分卡」來量化你的習慣在四個法則上的表現</li>
+                </ul>
+                
+                <div style="background: #F3E5F5; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 選擇一個你想養成的習慣，分別設計如何使它「顯而易見」、「有吸引力」、「簡單易行」、「令人滿足」。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-identity" class="screen">
+            <div class="header">
+                <h1>身份變化</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #E8F5E9; color: #4CAF50; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-user-check" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">從身份開始改變習慣</h2>
+                
+                <p style="margin-bottom: 15px;">改變習慣的最有效方法是改變你的身份認同。當你相信自己是某種類型的人時，你更有可能採取與這種身份一致的行動。</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 真正的行為改變是身份改變。你需要成為你想要的那個人，而不只是做那個人會做的事。
+                </div>
+                
+                <p style="margin-bottom: 15px;">行為改變的三個層次：</p>
+                
+                <div style="margin-bottom: 20px;">
+                    <div style="background: #C8E6C9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>1. 改變結果</strong> (減重、出版一本書、贏得比賽)<br>
+                        這是最表面的改變層次，專注於你想要達成的目標。
+                    </div>
+                    
+                    <div style="background: #A5D6A7; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>2. 改變過程</strong> (建立新的健身計劃、寫作流程、訓練策略)<br>
+                        這個層次更深入，著重於你採取的行動和系統。
+                    </div>
+                    
+                    <div style="background: #81C784; padding: 15px; border-radius: 8px; margin-bottom: 10px; color: white;">
+                        <strong>3. 改變身份</strong> (成為一個健康的人、一個作家、一個運動員)<br>
+                        這是最深層次的改變，關注你是誰以及你對自己的信念。
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 15px;">習慣不只是做某事，而是成為某種人。每次你完成一個習慣，就是在「投票」支持你想成為的那個人的身份。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何應用：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>決定你想成為的人，確定你期望的身份</li>
+                    <li>證明自己的身份，通過小贏建立證據</li>
+                    <li>重複那些能強化你期望身份的行為</li>
+                    <li>使用「我是......的人」這樣的陳述來強化身份認同</li>
+                </ul>
+                
+                <div style="background: #E8F5E9; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 填寫這個句子「我是_____的人」（例如：「我是照顧健康的人」「我是有條理的人」），然後設計一個小習慣來支持這個身份。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-tracking" class="screen">
+            <div class="header">
+                <h1>習慣追蹤</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #FFF3E0; color: #FF9800; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-chart-line" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">養成習慣的關鍵方法</h2>
+                
+                <p style="margin-bottom: 15px;">習慣追蹤是最簡單且最有效的習慣養成策略之一。通過記錄和測量你的習慣，你可以保持意識，創造視覺提示，並提供即時滿足感。</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 「你不能改進你沒有測量的東西。」追蹤習慣能使進度可視化，提供動力，並增加責任感。
+                </div>
+                
+                <p style="margin-bottom: 15px;">習慣追蹤的好處：</p>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li><strong>明顯的提示</strong> - 追蹤表本身就是一個視覺提醒</li>
+                    <li><strong>吸引力增強</strong> - 看到進度能帶來成就感和動力</li>
+                    <li><strong>滿足感增加</strong> - 標記完成項目本身就是一種獎勵</li>
+                    <li><strong>避免破窗效應</strong> - 可視化的連續記錄激勵你不打破連勝紀錄</li>
+                </ul>
+                
+                <p style="margin-bottom: 15px;">習慣追蹤最強大的好處之一是它能展示你的進步。習慣日記提供了無法否認的證據，證明你正在成為你想成為的那種人。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何有效追蹤：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>自動化追蹤或使用實體追蹤工具（如本應用或紙質日記）</li>
+                    <li>習慣養成後立即追蹤，不要拖延記錄</li>
+                    <li>使用「不要破壞連續」的理念保持動力</li>
+                    <li>如果錯過一天，絕不要連續錯過兩天</li>
+                </ul>
+                
+                <div style="background: #FFF3E0; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 創建一個簡單的習慣追蹤表，包括2-3個你最想培養的習慣，連續追蹤30天。每次完成習慣時，給自己一個視覺標記。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-stacking" class="screen">
+            <div class="header">
+                <h1>習慣疊加</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #E1F5FE; color: #03A9F4; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-layer-group" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">將新習慣與已有習慣連接</h2>
+                
+                <p style="margin-bottom: 15px;">習慣疊加是一種強大的策略，它將新習慣與已經穩固的習慣連接起來。公式是：「在[當前習慣]之後，我將[新習慣]。」</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 你的當前習慣可以成為新習慣的觸發提示，讓養成新習慣變得更自然、更容易。
+                </div>
+                
+                <p style="margin-bottom: 15px;">習慣疊加的例子：</p>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>在倒咖啡後，我將喝一杯水</li>
+                    <li>在刷牙後，我將冥想一分鐘</li>
+                    <li>在打開筆記本電腦後，我將寫作5分鐘</li>
+                    <li>在脫下工作鞋後，我將立即換上運動鞋</li>
+                </ul>
+                
+                <p style="margin-bottom: 15px;">習慣疊加的優勢在於利用了已有的行為模式，不需要建立全新的提示。你的大腦已經關聯並期待某些行為序列，你只需在這個序列中插入新習慣。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何有效疊加習慣：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>選擇頻率相似的習慣進行疊加（例如，每日習慣疊加每日習慣）</li>
+                    <li>確保新舊習慣之間有邏輯連接，使轉換自然</li>
+                    <li>從小開始，逐漸建立習慣鏈</li>
+                    <li>使用明確的「如果-那麼」計劃來強化疊加</li>
+                </ul>
+                
+                <div style="background: #E1F5FE; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 列出你當前最穩固的3-5個日常習慣，然後為每個習慣設計一個可以疊加的微小新習慣。選擇其中一個開始實踐。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-environment" class="screen">
+            <div class="header">
+                <h1>環境設計</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #F1F8E9; color: #8BC34A; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-home" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">創造有利於好習慣的環境</h2>
+                
+                <p style="margin-bottom: 15px;">我們的行為很大程度上是環境的產物。通過改變我們的環境，我們可以自然而然地改變我們的行為，不需要額外的意志力和動機。</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 「讓好習慣的提示顯而易見，讓壞習慣的提示隱而不見。」你的環境應該引導你做正確的事，而不是引誘你做錯誤的事。
+                </div>
+                
+                <p style="margin-bottom: 15px;">環境設計的策略：</p>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li><strong>環境提示的策略性放置</strong> - 把想要使用的物品放在顯眼位置</li>
+                    <li><strong>情境關聯</strong> - 為不同活動創建專屬空間，將環境與特定行為關聯</li>
+                    <li><strong>一次性選擇</strong> - 預先做出對環境的調整，避免重複決策</li>
+                    <li><strong>減少摩擦</strong> - 降低執行好習慣的阻力</li>
+                </ul>
+                
+                <p style="margin-bottom: 15px;">小環境調整的例子：</p>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>想多喝水，就在家中各處放置水瓶</li>
+                    <li>想少看手機，就把充電器放在不常去的房間</li>
+                    <li>想多讀書，就在茶几上放一本開口的書</li>
+                    <li>想早起跑步，就睡前把運動服和跑鞋放在床邊</li>
+                </ul>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何設計環境：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>分析你的環境中哪些因素促進好習慣，哪些促進壞習慣</li>
+                    <li>重新設計你的環境，使好習慣的提示明顯，壞習慣的提示隱藏</li>
+                    <li>創建專屬於特定習慣的空間或情境</li>
+                    <li>提前準備環境，減少執行好習慣的阻力</li>
+                </ul>
+                
+                <div style="background: #F1F8E9; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 選擇你的一個重要空間（如工作桌、臥室或廚房），重新設計它以促進一個好習慣並抑制一個壞習慣。記錄這種變化如何影響你的行為。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-two-minute" class="screen">
+            <div class="header">
+                <h1>兩分鐘法則</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #E0F7FA; color: #00BCD4; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-clock" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">讓習慣養成變得簡單</h2>
+                
+                <p style="margin-bottom: 15px;">兩分鐘法則是一個強大的策略，讓你能夠克服開始新習慣的阻力。核心理念是：「新習慣應該不到兩分鐘就能完成。」</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 習慣必須先建立，然後才能改進。標準化之前的優化是浪費。從超級小的習慣開始，讓它成為你身份的一部分，然後再擴大規模。
+                </div>
+                
+                <p style="margin-bottom: 15px;">兩分鐘法則的例子：</p>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>「閱讀30分鐘」變成「讀一頁書」</li>
+                    <li>「跑步5公里」變成「穿上跑鞋並走出門」</li>
+                    <li>「寫一篇文章」變成「寫一句話」</li>
+                    <li>「做一小時瑜伽」變成「鋪好瑜伽墊並做一個姿勢」</li>
+                </ul>
+                
+                <p style="margin-bottom: 15px;">這個法則利用了兩個關鍵心理學原理：</p>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li><strong>啟動儀式</strong> - 簡化的入門動作可以引導完整的習慣序列</li>
+                    <li><strong>門檻降低</strong> - 極小的承諾減少了開始的心理阻力</li>
+                </ul>
+                
+                <p style="margin-bottom: 15px;">重要的是要理解，兩分鐘法則不是關於養成兩分鐘的習慣，而是關於如何開始養成可能持續更長時間的習慣。一旦你開始，自然而然會繼續。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何應用兩分鐘法則：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>將你想要的任何習慣縮小到只需兩分鐘或更少的版本</li>
+                    <li>專注於習慣的入門儀式，讓它盡可能簡單</li>
+                    <li>養成「顯示即可」的心態 - 只要出現就算成功</li>
+                    <li>一旦習慣養成，再逐漸擴展時間和範圍</li>
+                </ul>
+                
+                <div style="background: #E0F7FA; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 列出3個你一直拖延的習慣，為每個習慣創建一個「兩分鐘版本」。在接下來的一週內，僅承諾執行這些微小版本。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-bad-habits" class="screen">
+            <div class="header">
+                <h1>壞習慣的斷捨離</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #FFEBEE; color: #F44336; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-ban" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">打破不良循環</h2>
+                
+                <p style="margin-bottom: 15px;">擺脫壞習慣與養成好習慣一樣重要。壞習慣的斷捨離需要應用反向的四個法則。</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 我們很少「消除」壞習慣，更多是「替換」它們。保留提示和獎勵，改變行為。
+                </div>
+                
+                <p style="margin-bottom: 15px;">壞習慣的反向四法則：</p>
+                
+                <div style="margin-bottom: 20px;">
+                    <div style="background: #FFEBEE; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>1. 讓它隱而不見</strong> (消除提示)<br>
+                        減少環境中的壞習慣觸發因素，避免接觸誘惑。
+                    </div>
+                    
+                    <div style="background: #FFCDD2; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>2. 讓它缺乏吸引力</strong> (減少渴望)<br>
+                        重塑對壞習慣的心態，強調其負面後果而非短期快感。
+                    </div>
+                    
+                    <div style="background: #EF9A9A; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>3. 讓它難以執行</strong> (增加阻力)<br>
+                        增加壞習慣的執行難度和摩擦，讓它不值得花費精力。
+                    </div>
+                    
+                    <div style="background: #E57373; padding: 15px; border-radius: 8px; margin-bottom: 10px; color: white;">
+                        <strong>4. 讓它令人不滿</strong> (減少獎勵)<br>
+                        增加壞習慣的即時負面後果，使其代價變得明顯。
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 15px;">壞習慣通常是對潛在需求的回應（如壓力釋放、社交需求、刺激尋求）。關鍵是找到滿足相同需求的健康替代品。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何斷捨離壞習慣：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>識別壞習慣的提示和觸發因素</li>
+                    <li>增加執行壞習慣的阻力（例如，使用網站攔截器、將零食放在不便拿取的地方）</li>
+                    <li>找到能提供類似滿足感但更健康的替代行為</li>
+                    <li>使用「承諾設備」增加不良行為的即時成本</li>
+                    <li>與志同道合的人一起，創造社會壓力</li>
+                </ul>
+                
+                <div style="background: #FFEBEE; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 選擇一個你想斷捨離的壞習慣，應用四個反向法則設計一個完整的策略。特別關注找到一個能滿足相同潛在需求的健康替代品。
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-consistency" class="screen">
+            <div class="header">
+                <h1>習慣的持續策略</h1>
+                <button class="btn btn-outline" onclick="showScreen('knowledge-screen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #EDE7F6; color: #673AB7; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-calendar-check" style="font-size: 40px;"></i>
+                    </div>
+                </div>
+                
+                <h2 style="margin-bottom: 15px; font-size: 20px;">如何堅持不放棄</h2>
+                
+                <p style="margin-bottom: 15px;">養成習慣的最大挑戰不是開始，而是持續。即使是最微小的習慣，如果能持續數年，也會產生巨大的影響。</p>
+                
+                <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>關鍵思想：</strong> 「永不錯過兩次。」如果你錯過了一天，馬上回到軌道上。真正重要的不是完美，而是一致性。
+                </div>
+                
+                <p style="margin-bottom: 15px;">持續習慣的關鍵策略：</p>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li><strong>"不要破壞連續"原則</strong> - 視覺化你的連續記錄</li>
+                    <li><strong>習慣契約</strong> - 增加放棄的社會或經濟成本</li>
+                    <li><strong>問責夥伴</strong> - 找人監督你的進度</li>
+                    <li><strong>習慣堆疊</strong> - 一次只養成一個關鍵習慣</li>
+                </ul>
+                
+                <p style="margin-bottom: 15px;">理解「適當的難度」原則也很重要：習慣必須足夠具有挑戰性以維持興趣，但又不至於太難而令人氣餒。</p>
+                
+                <h3 style="margin: 20px 0 10px 0; font-size: 18px;">如何應對習慣中斷：</h3>
+                
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li>計劃恢復策略，預先考慮可能的中斷</li>
+                    <li>使用「如果-那麼」計劃來應對預期的障礙</li>
+                    <li>接受「完美是好的敵人」，不要讓一次失敗導致完全放棄</li>
+                    <li>重新調整習慣規模，如果堅持困難，縮小習慣</li>
+                </ul>
+                
+                <p style="margin-bottom: 15px;">習慣變化是一個持續的過程，而不是一次性事件。真正的目標不是完成21天或30天的挑戰，而是在生活中建立終身的身份和系統。</p>
+                
+                <div style="background: #EDE7F6; padding: 15px; border-radius: 8px;">
+                    <strong>實踐挑戰：</strong> 為你最重要的習慣創建一個「不中斷計劃」。列出至少三種可能導致習慣中斷的情況，以及每種情況的具體應對策略。
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部導航欄 -->
+        <div class="navbar">
+            <a href="#" class="nav-item active" onclick="switchTab(this, 'dashboard-screen')">
+                <i class="fas fa-home"></i>
+                <span>首頁</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab(this, 'stats-screen')">
+                <i class="fas fa-chart-pie"></i>
+                <span>統計</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab(this, 'knowledge-screen')">
+                <i class="fas fa-book-open"></i>
+                <span>知識庫</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab(this, 'achievements-screen')">
+                <i class="fas fa-trophy"></i>
+                <span>成就</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab(this, 'settings-screen')">
+                <i class="fas fa-cog"></i>
+                <span>設置</span>
+            </a>
+        </div>
+    </div>
+    
+    <script src="scripts.js"></script>
+    <script>
+        // 頁面切換函數
+        function showScreen(screenId) {
+            // 隱藏所有頁面
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // 顯示指定頁面
+            document.getElementById(screenId).classList.add('active');
+            
+            // 如果不是歡迎頁，更新底部導航選中狀態
+            if (screenId !== 'welcome-screen') {
+                updateNavbar(screenId);
+            }
+            
+            // 根據頁面執行特定的渲染
+            if (screenId === 'dashboard-screen') {
+                renderDashboard();
+            } else if (screenId === 'stats-screen') {
+                renderStats();
+            } else if (screenId === 'achievements-screen') {
+                renderAchievements();
+            } else if (screenId === 'settings-screen') {
+                renderSettings();
+            }
+        }
+        
+        // 更新底部導航選中狀態
+        function updateNavbar(screenId) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 根據當前頁面設置對應的導航項為選中狀態
+            if (screenId === 'dashboard-screen') {
+                document.querySelector('.nav-item:nth-child(1)').classList.add('active');
+            } else if (screenId === 'stats-screen') {
+                document.querySelector('.nav-item:nth-child(2)').classList.add('active');
+            } else if (screenId === 'knowledge-screen') {
+                document.querySelector('.nav-item:nth-child(3)').classList.add('active');
+            } else if (screenId === 'achievements-screen') {
+                document.querySelector('.nav-item:nth-child(4)').classList.add('active');
+            } else if (screenId === 'settings-screen') {
+                document.querySelector('.nav-item:nth-child(5)').classList.add('active');
+            }
+            // 對於文章頁面，保持知識庫選項為活動狀態
+            else if (screenId.startsWith('article-')) {
+                document.querySelector('.nav-item:nth-child(3)').classList.add('active');
+            }
+        }
+        
+        // 導航欄標籤切換
+        function switchTab(element, screenId) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            element.classList.add('active');
+            showScreen(screenId);
+        }
+        
+        // 顯示特定文章
+        function showArticle(articleId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            document.getElementById(articleId).classList.add('active');
+        }
+        
+        // 清除所有數據
+        document.getElementById('clear-data').addEventListener('click', function() {
+            if (confirm('確定要清除所有數據嗎？此操作無法恢復。')) {
+                localStorage.clear();
+                initializeLocalStorage();
+                alert('數據已清除。');
+                showScreen('welcome-screen');
+            }
+        });
+        
+        // 獎勵兌換功能
+        document.getElementById('redeem-movie').addEventListener('click', function() {
+            const achievements = getAchievements();
+            if (achievements.habit_former) {
+                alert('恭喜！您已兌換電影夜獎勵。享受您的時光吧！');
+                this.textContent = '已兌換';
+                this.disabled = true;
+            } else {
+                alert('您需要先獲得"習慣養成者"成就才能兌換此獎勵。');
+            }
+        });
+        
+        document.getElementById('redeem-food').addEventListener('click', function() {
+            const habits = getHabits();
+            const hasHighCompletionRate = habits.some(habit => habit.completionRate >= 80);
+            
+            if (hasHighCompletionRate) {
+                alert('恭喜！您已兌換美食獎勵。享受您的美食吧！');
+                this.textContent = '已兌換';
+                this.disabled = true;
+            } else {
+                alert('您需要先讓一個習慣的完成率達到80%才能兌換此獎勵。');
+            }
+        });
+        
+        // 添加jQuery風格的選擇器輔助函數
+        document.querySelector = function(selector) {
+            return document.querySelector(selector);
+        };
+        
+        // :contains 選擇器實現
+        HTMLElement.prototype.querySelectorAll = function(selector) {
+            if (selector.includes(':contains(')) {
+                const normalSelector = selector.split(':contains(')[0];
+                const textToMatch = selector.split(':contains(')[1].split(')')[0];
+                
+                const elements = Array.from(this.querySelectorAll(normalSelector));
+                return elements.filter(el => el.textContent.includes(textToMatch));
+            }
+            
+            return this.querySelectorAll(selector);
+        };
+    </script>
+</body>
+</html>

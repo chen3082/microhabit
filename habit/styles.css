@@ -1,0 +1,313 @@
+/* 額外的 CSS 以支援深色模式和其他改進 */
+
+/* 深色模式變量 */
+body.dark-mode {
+    --primary: #56c258;
+    --primary-light: #8ee68f;
+    --primary-dark: #389a3b;
+    --secondary: #ffd54f;
+    --danger: #ff5252;
+    --gray: #9e9e9e;
+    --light-gray: #2d2d2d;
+    --dark-gray: #e0e0e0;
+    --white: #1e1e1e;
+    --text: #ffffff;
+    --card-bg: #333333;
+    --shadow: rgba(0, 0, 0, 0.4);
+}
+
+/* 普通模式變量 */
+body:not(.dark-mode) {
+    --text: #333333;
+    --card-bg: #ffffff;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* 通用樣式覆蓋 */
+body.dark-mode {
+    color: var(--text);
+}
+
+body.dark-mode .card,
+body.dark-mode .screen,
+body.dark-mode .navbar {
+    background-color: var(--card-bg);
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+body.dark-mode .container {
+    box-shadow: 0 0 15px var(--shadow);
+}
+
+/* 動畫效果 */
+.habit-card, .btn, .nav-item, .icon-item {
+    transition: all 0.3s ease;
+}
+
+.habit-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 圓形進度條的動畫效果 */
+@keyframes progress-fill {
+    from { stroke-dasharray: 0 100; }
+}
+
+.circle-progress {
+    position: relative;
+}
+
+.circle-progress::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    border: 8px solid var(--light-gray);
+    z-index: 0;
+}
+
+.circle-progress::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    border: 8px solid transparent;
+    border-top-color: var(--primary);
+    border-right-color: var(--primary);
+    transform: rotate(calc(var(--percent) * 3.6deg - 90deg));
+    z-index: 1;
+    transition: transform 1s ease;
+}
+
+/* 確保文字內容顯示在圓上方 */
+.circle-progress > span {
+    position: relative;
+    z-index: 2;
+}
+
+/* 日曆格子的增強樣式 */
+.calendar-day {
+    position: relative;
+    overflow: hidden;
+}
+
+.calendar-day.completed::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--primary);
+    z-index: -1;
+    opacity: 0.8;
+    transform: scale(0);
+    border-radius: 50%;
+    animation: scale-in 0.3s forwards;
+}
+
+.calendar-day.missed::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--danger);
+    z-index: -1;
+    opacity: 0.8;
+    transform: scale(0);
+    border-radius: 50%;
+    animation: scale-in 0.3s forwards;
+}
+
+@keyframes scale-in {
+    to {
+        transform: scale(1);
+    }
+}
+
+/* 表單元素的增強樣式 */
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* 實現更好的觸摸反饋 */
+@media (hover: none) {
+    .btn:active,
+    .nav-item:active,
+    .habit-card:active,
+    .icon-item:active {
+        opacity: 0.7;
+    }
+}
+
+/* 更好的容錯設計 */
+.screen {
+    min-height: 100%;
+}
+
+/* 更好的滾動條 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-gray);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* 加載動畫 */
+.loading {
+    display: inline-block;
+    position: relative;
+    width: 64px;
+    height: 64px;
+}
+
+.loading:after {
+    content: " ";
+    display: block;
+    border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    margin: 1px;
+    border: 5px solid var(--primary);
+    border-color: var(--primary) transparent var(--primary) transparent;
+    animation: loading 1.2s linear infinite;
+}
+
+@keyframes loading {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 響應式設計增強 */
+@media (max-width: 360px) {
+    .stat-value {
+        font-size: 16px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+    }
+    
+    .calendar-day {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+}
+
+/* 觸覺反饋（類似於原生應用） */
+.btn, .nav-item, .habit-card, .icon-item, .settings-item, .toggle {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 改進的按鈕樣式 */
+.btn-primary {
+    background: linear-gradient(to right, var(--primary), var(--primary-dark));
+}
+
+.btn-secondary {
+    background: linear-gradient(to right, var(--secondary), #FFB300);
+}
+
+/* 空狀態的樣式 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: var(--light-gray);
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+    color: var(--dark-gray);
+}
+
+/* 徽章樣式 */
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--primary-light);
+    color: var(--white);
+    margin-left: 8px;
+}
+
+.badge-today {
+    background: var(--primary);
+}
+
+.badge-streak {
+    background: var(--secondary);
+    color: var(--dark-gray);
+}
+
+/* 優化表單和卡片密度 */
+@media (min-height: 700px) {
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .card {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+}
+
+/* 優化底部導航 */
+.navbar {
+    padding: 12px 0;
+}
+
+.nav-item i {
+    transition: transform 0.2s ease;
+}
+
+.nav-item.active i {
+    transform: translateY(-4px);
+} 
